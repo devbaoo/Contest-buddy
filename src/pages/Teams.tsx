@@ -56,6 +56,7 @@ import {
 } from "@/lib/mockData";
 import { Team, TeamInvitation } from "@/types";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function Teams() {
   const [teams, setTeams] = useState(mockTeams);
@@ -64,6 +65,7 @@ export default function Teams() {
   const [selectedTab, setSelectedTab] = useState("my-teams");
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const currentUserId = "1"; // Mock current user
+  const navigate = useNavigate();
 
   const myTeams = teams.filter((team) =>
     team.members.some((member) => member.userId === currentUserId),
@@ -145,10 +147,10 @@ export default function Teams() {
     )?.role;
 
     return (
-      <Card className="card-hover">
+      <Card className="card-hover cursor-pointer" onClick={() => navigate(`/teams/${team.id}`)}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-4 w-full">
               <Avatar className="h-12 w-12">
                 <AvatarImage src={team.avatar} alt={team.name} />
                 <AvatarFallback>
@@ -158,9 +160,9 @@ export default function Teams() {
                     .join("")}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+              <div className="flex-1 text-left">
                 <div className="flex items-center space-x-2 mb-1">
-                  <h3 className="font-bold text-lg">{team.name}</h3>
+                  <h3 className="font-bold text-lg text-left">{team.name}</h3>
                   <Badge className={getTeamStatusColor(team.status)}>
                     {getTeamStatusLabel(team.status)}
                   </Badge>
@@ -168,10 +170,10 @@ export default function Teams() {
                     <Crown className="h-4 w-4 text-yellow-500" />
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">
+                <p className="text-sm text-muted-foreground mb-2 text-left">
                   {team.description}
                 </p>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground text-left">
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-1" />
                     {team.members.length}/{team.maxMembers} thành viên
@@ -233,7 +235,7 @@ export default function Teams() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 text-left">
           {team.competitionTitle && (
             <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
               <div className="flex items-center space-x-2">
@@ -463,33 +465,6 @@ export default function Teams() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remote"
-                  checked={formData.isRemote}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isRemote: checked as boolean })
-                  }
-                />
-                <Label htmlFor="remote" className="text-sm">
-                  Làm việc remote
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="private"
-                  checked={formData.isPrivate}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isPrivate: checked as boolean })
-                  }
-                />
-                <Label htmlFor="private" className="text-sm">
-                  Nhóm riêng tư (chỉ tham gia bằng mời)
-                </Label>
-              </div>
-            </div>
-
             <div className="flex justify-end space-x-2">
               <Button
                 variant="outline"
@@ -544,11 +519,10 @@ export default function Teams() {
 
         {/* Content */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="my-teams">
               Nhóm của tôi ({myTeams.length})
             </TabsTrigger>
-            <TabsTrigger value="discover">Khám phá nhóm</TabsTrigger>
             <TabsTrigger value="invitations">
               Lời mời ({myInvitations.length})
             </TabsTrigger>
@@ -579,14 +553,6 @@ export default function Teams() {
                 ))}
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="discover" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredTeams.map((team) => (
-                <TeamCard key={team.id} team={team} />
-              ))}
-            </div>
           </TabsContent>
 
           <TabsContent value="invitations" className="space-y-6 mt-6">
@@ -622,21 +588,21 @@ export default function Teams() {
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="font-semibold">
+                            <h3 className="font-semibold text-left">
                               {invitation.team.name}
                             </h3>
                             <span className="text-sm text-muted-foreground">
                               • {formatDate(invitation.createdAt)}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <p className="text-sm text-muted-foreground mb-2 text-left">
                             <span className="font-medium">
                               {invitation.inviter.fullName}
                             </span>{" "}
                             đã mời bạn tham gia nhóm
                           </p>
-                          <p className="text-sm mb-4">{invitation.message}</p>
-                          <div className="flex space-x-2">
+                          <p className="text-sm mb-4 text-left">{invitation.message}</p>
+                          <div className="flex gap-2 justify-start">
                             <Button
                               size="sm"
                               onClick={() =>

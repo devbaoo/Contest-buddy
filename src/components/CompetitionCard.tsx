@@ -6,7 +6,7 @@ import {
   Clock,
   ExternalLink,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Competition } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import CompetitionThumbnail from "./CompetitionThumbnail";
 
 interface CompetitionCardProps {
   competition: Competition;
@@ -27,6 +28,8 @@ export default function CompetitionCard({
   competition,
   variant = "default",
 }: CompetitionCardProps) {
+  const navigate = useNavigate();
+
   const isDeadlineSoon = () => {
     const today = new Date();
     const deadline = new Date(competition.registrationDeadline);
@@ -83,20 +86,20 @@ export default function CompetitionCard({
   if (variant === "compact") {
     return (
       <Card className="card-hover">
-        <CardContent className="p-4">
+        <CardContent className="p-4 text-left">
           <div className="flex items-start space-x-3">
             <div className="text-2xl">{getCategoryIcon()}</div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-left">
               <div className="flex items-center justify-between mb-1">
-                <h3 className="font-semibold text-sm line-clamp-1">
+                <h3 className="font-semibold text-sm line-clamp-1 text-left">
                   {competition.title}
                 </h3>
                 {getStatusBadge()}
               </div>
-              <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+              <p className="text-xs text-muted-foreground mb-2 line-clamp-2 text-left">
                 {competition.description}
               </p>
-              <div className="flex items-center text-xs text-muted-foreground space-x-3">
+              <div className="flex items-center text-xs text-muted-foreground space-x-3 text-left">
                 <div className="flex items-center">
                   <Calendar className="h-3 w-3 mr-1" />
                   {formatDate(competition.registrationDeadline)}
@@ -116,40 +119,45 @@ export default function CompetitionCard({
   return (
     <Card
       className={cn(
-        "card-hover group",
+        "card-hover group cursor-pointer",
         variant === "featured" &&
           "border-primary shadow-medium bg-gradient-to-br from-primary/5 to-purple-500/5",
       )}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("a[rel='noopener noreferrer']")) return;
+        navigate(`/competition/${competition.id}`);
+      }}
     >
-      {competition.imageUrl && (
-        <div className="relative overflow-hidden rounded-t-lg">
+      {/* Competition image or fallback */}
+      <div className="relative">
+        {competition.imageUrl ? (
           <img
             src={competition.imageUrl}
             alt={competition.title}
-            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-48 object-cover rounded-t-lg"
+            onError={e => { (e.target as HTMLImageElement).src = "/thi.png"; }}
           />
-          {variant === "featured" && (
-            <div className="absolute top-3 left-3">
-              <Badge className="bg-primary text-primary-foreground">
-                <Trophy className="h-3 w-3 mr-1" />
-                Nổi bật
-              </Badge>
-            </div>
-          )}
-          {isDeadlineSoon() && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-warning text-warning-foreground animate-pulse">
-                <Clock className="h-3 w-3 mr-1" />
-                Sắp hết hạn
-              </Badge>
-            </div>
-          )}
-        </div>
-      )}
+        ) : (
+          <img
+            src="/thi.png"
+            alt="Default Competition Thumbnail"
+            className="w-full h-48 object-cover rounded-t-lg"
+          />
+        )}
+        {/* Deadline Warning Badge */}
+        {isDeadlineSoon() && (
+          <div className="absolute top-3 right-3 z-10">
+            <Badge className="bg-warning text-warning-foreground animate-pulse">
+              <Clock className="h-3 w-3 mr-1" />
+              Sắp hết hạn
+            </Badge>
+          </div>
+        )}
+      </div>
 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
+          <div className="flex-1 text-left">
             <div className="flex items-center space-x-2 mb-2">
               <span className="text-lg">{getCategoryIcon()}</span>
               <Badge variant="secondary" className="text-xs">
@@ -164,10 +172,10 @@ export default function CompetitionCard({
                 {competition.level}
               </Badge>
             </div>
-            <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">
+            <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors text-left">
               {competition.title}
             </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm text-muted-foreground line-clamp-2 text-left">
               {competition.description}
             </p>
           </div>
@@ -175,7 +183,7 @@ export default function CompetitionCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 text-left">
         <div className="text-sm text-muted-foreground space-y-2">
           <div className="flex items-center">
             <Calendar className="h-4 w-4 mr-2 text-primary" />

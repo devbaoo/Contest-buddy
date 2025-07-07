@@ -3,8 +3,6 @@ import {
   MessageSquare,
   Send,
   Search,
-  Phone,
-  Video,
   MoreVertical,
   Smile,
   Paperclip,
@@ -12,6 +10,7 @@ import {
   Minimize2,
   Users,
   Circle,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,17 +22,22 @@ import { Separator } from "@/components/ui/separator";
 import { mockChatConversations, mockChatMessages } from "@/lib/mockData";
 import { ChatConversation, ChatMessage } from "@/types";
 import { cn } from "@/lib/utils";
+import { useChat } from "@/contexts/ChatContext";
 
-interface ChatProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
+interface ChatProps {}
 
-export default function Chat({ isOpen, onToggle }: ChatProps) {
+export default function Chat({}: ChatProps) {
+  const {
+    isChatOpen,
+    setIsChatOpen,
+    selectedConversation,
+    setSelectedConversation,
+    isInIndividualChat,
+    setIsInIndividualChat
+  } = useChat();
+
   const [conversations] = useState(mockChatConversations);
   const [messages, setMessages] = useState(mockChatMessages);
-  const [selectedConversation, setSelectedConversation] =
-    useState<ChatConversation | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -104,17 +108,31 @@ export default function Chat({ isOpen, onToggle }: ChatProps) {
     return conversation.participantDetails.find((p) => p.id !== currentUserId);
   };
 
-  if (!isOpen) {
+  const handleBackToGeneralChat = () => {
+    setSelectedConversation(null);
+    setIsInIndividualChat(false);
+  };
+
+  const handleSelectConversation = (conversation: ChatConversation) => {
+    setSelectedConversation(conversation);
+    setIsInIndividualChat(true);
+  };
+
+  const onToggle = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+
+  if (!isChatOpen) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
         <Button
           onClick={onToggle}
-          className="h-14 w-14 rounded-full shadow-lg"
+          className="h-14 w-14 rounded-full shadow-lg relative"
           size="icon"
         >
           <MessageSquare className="h-6 w-6" />
           {conversations.some((c) => c.unreadCount > 0) && (
-            <Badge className="absolute -top-2 -right-2 h-6 w-6 p-0 text-xs">
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
               {conversations.reduce((sum, c) => sum + c.unreadCount, 0)}
             </Badge>
           )}
@@ -128,8 +146,24 @@ export default function Chat({ isOpen, onToggle }: ChatProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center space-x-2">
+          {isInIndividualChat && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToGeneralChat}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
           <MessageSquare className="h-5 w-5" />
-          <span className="font-semibold">Tin nhắn</span>
+          <span className="font-semibold">
+            {isInIndividualChat
+              ? selectedConversation?.isGroup
+                ? selectedConversation.groupName
+                : getOtherParticipant(selectedConversation!)?.fullName
+              : "Tin nhắn"}
+          </span>
         </div>
         <div className="flex items-center space-x-1">
           <Button variant="ghost" size="sm">
@@ -142,153 +176,94 @@ export default function Chat({ isOpen, onToggle }: ChatProps) {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Conversations List */}
-        <div
-          className={cn(
-            "border-r flex flex-col",
-            selectedConversation ? "w-1/3" : "w-full",
-          )}
-        >
-          {/* Search */}
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-9"
-              />
+        {/* Conversations List - Show only when not in individual chat */}
+        {!isInIndividualChat && (
+          <div className="w-full flex flex-col">
+            {/* Search */}
+            <div className="p-3 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-9"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Conversations */}
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {filteredConversations.map((conversation) => {
-                const otherParticipant = getOtherParticipant(conversation);
-                const displayName = conversation.isGroup
-                  ? conversation.groupName
-                  : otherParticipant?.fullName;
-                const displayAvatar = conversation.isGroup
-                  ? conversation.groupAvatar
-                  : otherParticipant?.avatar;
+            {/* Conversations */}
+            <ScrollArea className="flex-1">
+              <div className="p-2 space-y-1">
+                {filteredConversations.map((conversation) => {
+                  const otherParticipant = getOtherParticipant(conversation);
+                  const displayName = conversation.isGroup
+                    ? conversation.groupName
+                    : otherParticipant?.fullName;
+                  const displayAvatar = conversation.isGroup
+                    ? conversation.groupAvatar
+                    : otherParticipant?.avatar;
 
-                return (
-                  <div
-                    key={conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
-                    className={cn(
-                      "flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-accent transition-colors",
-                      selectedConversation?.id === conversation.id &&
-                        "bg-accent",
-                    )}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={displayAvatar} alt={displayName} />
-                        <AvatarFallback className="text-sm">
-                          {conversation.isGroup ? (
-                            <Users className="h-5 w-5" />
-                          ) : (
-                            displayName
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
-                      {!conversation.isGroup && otherParticipant?.isOnline && (
-                        <Circle className="absolute bottom-0 right-0 h-3 w-3 text-green-500 fill-current" />
+                  return (
+                    <div
+                      key={conversation.id}
+                      onClick={() => handleSelectConversation(conversation)}
+                      className={cn(
+                        "flex items-center space-x-3 p-2 rounded-lg cursor-pointer hover:bg-accent transition-colors",
+                        selectedConversation?.id === conversation.id &&
+                          "bg-accent",
                       )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm truncate">
-                          {displayName}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatLastActivity(conversation.lastActivity)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {conversation.lastMessage?.content ||
-                            "Chưa có tin nhắn"}
-                        </p>
-                        {conversation.unreadCount > 0 && (
-                          <Badge className="h-5 w-5 p-0 text-xs">
-                            {conversation.unreadCount}
-                          </Badge>
+                    >
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={displayAvatar} alt={displayName} />
+                          <AvatarFallback className="text-sm">
+                            {conversation.isGroup ? (
+                              <Users className="h-5 w-5" />
+                            ) : (
+                              displayName
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        {!conversation.isGroup && otherParticipant?.isOnline && (
+                          <Circle className="absolute bottom-0 right-0 h-3 w-3 text-green-500 fill-current" />
                         )}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm truncate">
+                            {displayName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatLastActivity(conversation.lastActivity)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conversation.lastMessage?.content ||
+                              "Chưa có tin nhắn"}
+                          </p>
+                          {conversation.unreadCount > 0 && (
+                            <Badge className="h-5 w-5 p-0 text-xs flex items-center justify-center">
+                              {conversation.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Chat Area */}
-        {selectedConversation && (
-          <div className="flex-1 flex flex-col">
-            {/* Chat Header */}
-            <div className="flex items-center justify-between p-3 border-b">
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={
-                        selectedConversation.isGroup
-                          ? selectedConversation.groupAvatar
-                          : getOtherParticipant(selectedConversation)?.avatar
-                      }
-                    />
-                    <AvatarFallback className="text-xs">
-                      {selectedConversation.isGroup ? (
-                        <Users className="h-4 w-4" />
-                      ) : (
-                        getOtherParticipant(selectedConversation)
-                          ?.fullName.split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                  {!selectedConversation.isGroup &&
-                    getOtherParticipant(selectedConversation)?.isOnline && (
-                      <Circle className="absolute bottom-0 right-0 h-2.5 w-2.5 text-green-500 fill-current" />
-                    )}
-                </div>
-                <div>
-                  <div className="font-medium text-sm">
-                    {selectedConversation.isGroup
-                      ? selectedConversation.groupName
-                      : getOtherParticipant(selectedConversation)?.fullName}
-                  </div>
-                  {!selectedConversation.isGroup && (
-                    <div className="text-xs text-muted-foreground">
-                      {getOtherParticipant(selectedConversation)?.isOnline
-                        ? "Đang hoạt động"
-                        : `Hoạt động ${formatLastActivity(getOtherParticipant(selectedConversation)?.lastSeen || new Date())}`}
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-              <div className="flex items-center space-x-1">
-                <Button variant="ghost" size="sm">
-                  <Phone className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Video className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            </ScrollArea>
+          </div>
+        )}
 
+        {/* Individual Chat Area - Show only when in individual chat */}
+        {isInIndividualChat && selectedConversation && (
+          <div className="w-full flex flex-col">
             {/* Messages */}
             <ScrollArea className="flex-1 p-3">
               <div className="space-y-3">

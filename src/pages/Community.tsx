@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MessageSquare,
   Users,
@@ -34,13 +35,19 @@ import {
 } from "@/lib/mockData";
 import { User } from "@/types";
 import { cn } from "@/lib/utils";
+import Footer from "@/components/Footer";
+import { useToast } from "@/hooks/use-toast";
+import { useChat } from "@/contexts/ChatContext";
 
 export default function Community() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState(mockUsers);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const { toast } = useToast();
+  const { openChatWithUser } = useChat();
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -103,10 +110,35 @@ export default function Community() {
     const [isInviting, setIsInviting] = useState(false);
     const [isMessaging, setIsMessaging] = useState(false);
 
+    const handleInvite = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsInviting(true);
+      
+      // Mock API call
+      setTimeout(() => {
+        setIsInviting(false);
+        toast({
+          title: "Gửi lời mời thành công!",
+          description: `Đã gửi lời mời đến ${user.fullName}. Họ sẽ nhận được thông báo.`,
+        });
+      }, 1000);
+    };
+
+    const handleMessage = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsMessaging(true);
+      
+      // Open chat with user
+      setTimeout(() => {
+        setIsMessaging(false);
+        openChatWithUser(user.id, user.fullName);
+      }, 500);
+    };
+
     return (
-      <Card className="card-hover">
+      <Card className="card-hover cursor-pointer" onClick={() => navigate(`/user/${user.id}`)}>
         <CardHeader className="pb-3">
-          <div className="flex items-start space-x-4">
+          <div className="flex items-start space-x-4 w-full">
             <Avatar className="h-16 w-16">
               <AvatarImage src={user.avatar} alt={user.fullName} />
               <AvatarFallback className="text-lg">
@@ -116,48 +148,46 @@ export default function Community() {
                   .join("")}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <h3 className="font-bold text-lg">{user.fullName}</h3>
+            <div className="flex-1 text-left">
+              <h3 className="font-bold text-lg text-left mb-1 flex items-center gap-2">
+                {user.fullName}
                 {user.isVerified && (
                   <CheckCircle className="h-5 w-5 text-blue-500" />
                 )}
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={cn(
-                        "h-4 w-4",
-                        i < Math.floor(user.rating)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300",
-                      )}
-                    />
-                  ))}
-                  <span className="text-sm text-muted-foreground ml-1">
-                    ({user.rating})
-                  </span>
-                </div>
+              </h3>
+              <div className="flex items-center mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "h-4 w-4",
+                      i < Math.floor(user.rating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300",
+                    )}
+                  />
+                ))}
+                <span className="text-sm text-muted-foreground ml-1">
+                  ({user.rating})
+                </span>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">
+              <p className="text-sm text-muted-foreground mb-1 text-left">
                 @{user.username}
               </p>
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                <div className="flex items-center">
-                  <School className="h-4 w-4 mr-1" />
-                  {user.school}
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {user.location.city}
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">{user.bio}</p>
+              <p className="text-sm text-muted-foreground mb-1 text-left flex items-center">
+                <School className="h-4 w-4 mr-1" />
+                {user.school}
+              </p>
+              <p className="text-sm text-muted-foreground mb-2 text-left flex items-center">
+                <MapPin className="h-4 w-4 mr-1" />
+                {user.location.city}
+              </p>
+              <p className="text-sm text-muted-foreground text-left">{user.bio}</p>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 text-left">
           {/* Skills */}
           <div>
             <div className="flex items-center space-x-2 mb-2">
@@ -225,7 +255,7 @@ export default function Community() {
             </div>
           )}
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="space-y-1 text-xs text-muted-foreground mb-2">
             <div className="flex items-center">
               <Calendar className="h-3 w-3 mr-1" />
               Tham gia từ {formatJoinDate(user.joinDate)}
@@ -240,7 +270,7 @@ export default function Community() {
           <div className="flex space-x-2">
             <Button
               className="flex-1"
-              onClick={() => setIsInviting(true)}
+              onClick={handleInvite}
               disabled={isInviting}
             >
               <UserPlus className="h-4 w-4 mr-2" />
@@ -249,7 +279,7 @@ export default function Community() {
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => setIsMessaging(true)}
+              onClick={handleMessage}
               disabled={isMessaging}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -263,15 +293,12 @@ export default function Community() {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="container pt-12">
+        <h1 className="text-3xl font-extrabold mb-8 text-center bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+          Tìm bạn thi
+        </h1>
+      </div>
       <div className="container py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Tìm bạn thi đấu</h1>
-          <p className="text-muted-foreground">
-            Khám phá và kết nối với các thành viên có cùng sở thích thi đấu
-          </p>
-        </div>
-
         {/* Search and Filters */}
         <div className="mb-6 space-y-4">
           <div className="flex gap-4">
@@ -320,15 +347,6 @@ export default function Community() {
               </SelectContent>
             </Select>
           </div>
-
-          <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-            <TabsList>
-              <TabsTrigger value="all">Tất cả</TabsTrigger>
-              <TabsTrigger value="verified">Đã xác thực</TabsTrigger>
-              <TabsTrigger value="high-rated">Đánh giá cao</TabsTrigger>
-              <TabsTrigger value="active">Hoạt động tích cực</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
 
         {/* User Cards */}

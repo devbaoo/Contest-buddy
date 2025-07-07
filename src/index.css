@@ -79,12 +79,21 @@
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  html {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
   }
 }
 
 @layer components {
   .container {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto max-w-7xl;
   }
 
   .gradient-text {

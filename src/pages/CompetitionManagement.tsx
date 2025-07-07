@@ -908,20 +908,6 @@ export default function CompetitionManagementPage() {
                         : "Tắt"}
                     </Badge>
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Phí đăng ký</p>
-                      <p className="text-sm text-muted-foreground">
-                        Mức phí cho mỗi thí sinh đăng ký
-                      </p>
-                    </div>
-                    <span className="font-medium">
-                      {formatCurrency(
-                        selectedCompetition.settings.registrationFee || 0,
-                      )}
-                    </span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
