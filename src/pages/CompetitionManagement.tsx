@@ -50,8 +50,9 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { mockCompetitionManagement } from "@/lib/mockData";
-import { CompetitionManagement, CompetitionParticipant } from "@/types";
+import { CompetitionManagement, CompetitionParticipant, Competition } from "@/types";
 import { cn } from "@/lib/utils";
+import CreateCompetitionModal from "@/components/CreateCompetitionModal";
 
 export default function CompetitionManagementPage() {
   const [competitions] = useState(mockCompetitionManagement);
@@ -60,6 +61,7 @@ export default function CompetitionManagementPage() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("overview");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -165,7 +167,7 @@ export default function CompetitionManagementPage() {
               <Download className="h-4 w-4 mr-2" />
               Xuất báo cáo
             </Button>
-            <Button>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Tạo cuộc thi mới
             </Button>
@@ -914,6 +916,17 @@ export default function CompetitionManagementPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Create Competition Modal */}
+      <CreateCompetitionModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={(newCompetition) => {
+          console.log("New competition created:", newCompetition);
+          // In a real app, you would add this to your competitions list
+          // setCompetitions(prev => [...prev, newCompetition]);
+        }}
+      />
     </div>
   );
 }
