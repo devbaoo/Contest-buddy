@@ -50,14 +50,14 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { mockCompetitionManagement } from "@/lib/mockData";
-import { CompetitionManagement, CompetitionParticipant, Competition } from "@/types";
+import { CompetitionManagement, CompetitionParticipant, Competition, ManagementStatus } from "@/types";
 import { cn } from "@/lib/utils";
 import CreateCompetitionModal from "@/components/CreateCompetitionModal";
 
 export default function CompetitionManagementPage() {
-  const [competitions] = useState(mockCompetitionManagement);
+  const [competitions, setCompetitions] = useState(mockCompetitionManagement);
   const [selectedCompetition, setSelectedCompetition] = useState(
-    competitions[0],
+    mockCompetitionManagement[0],
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("overview");
@@ -922,9 +922,85 @@ export default function CompetitionManagementPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={(newCompetition) => {
-          console.log("New competition created:", newCompetition);
-          // In a real app, you would add this to your competitions list
-          // setCompetitions(prev => [...prev, newCompetition]);
+          // Tạo competition management object từ competition mới
+          const newCompetitionManagement: CompetitionManagement = {
+            id: `mgmt-${newCompetition.id}`,
+            competitionId: newCompetition.id!,
+            competition: {
+              id: newCompetition.id!,
+              title: newCompetition.title!,
+              description: newCompetition.description!,
+              category: newCompetition.category!,
+              organizer: newCompetition.organizer!,
+              startDate: newCompetition.startDate!,
+              endDate: newCompetition.endDate!,
+              registrationDeadline: newCompetition.registrationDeadline!,
+              location: newCompetition.location!,
+              isOnline: newCompetition.isOnline!,
+              prizePool: newCompetition.prizePool,
+              participants: newCompetition.participants!,
+              maxParticipants: newCompetition.maxParticipants,
+              requiredSkills: newCompetition.requiredSkills!,
+              level: newCompetition.level!,
+              tags: newCompetition.tags!,
+              imageUrl: newCompetition.imageUrl,
+              website: newCompetition.website,
+              rules: newCompetition.rules,
+              featured: newCompetition.featured!,
+              status: newCompetition.status!,
+            },
+            organizerId: "current-organizer",
+            organizer: {
+              id: "current-organizer",
+              name: newCompetition.organizer!,
+              email: "organizer@example.com",
+              avatar: undefined,
+            },
+            status: "published" as ManagementStatus,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            settings: {
+              allowLateRegistration: false,
+              autoApproveRegistrations: true,
+              maxParticipants: newCompetition.maxParticipants,
+              registrationFee: 0,
+              emailNotifications: true,
+              publicLeaderboard: true,
+              allowTeamRegistration: true,
+              maxTeamSize: 5,
+            },
+            finances: {
+              budget: 0,
+              revenue: [],
+              expenses: [],
+              prizePool: 0,
+              sponsorships: [],
+              totalRevenue: 0,
+              totalExpenses: 0,
+              netProfit: 0,
+            },
+            statistics: {
+              totalRegistrations: 0,
+              approvedRegistrations: 0,
+              pendingRegistrations: 0,
+              rejectedRegistrations: 0,
+              completedSubmissions: 0,
+              registrationsByDate: [],
+              participantsBySchool: [],
+              participantsByRegion: [],
+              averageRating: 0,
+              completionRate: 0,
+            },
+            participants: [],
+          };
+
+          // Thêm cuộc thi mới vào danh sách
+          setCompetitions(prev => [newCompetitionManagement, ...prev]);
+          
+          // Cập nhật selectedCompetition nếu đây là cuộc thi đầu tiên
+          if (competitions.length === 0) {
+            setSelectedCompetition(newCompetitionManagement);
+          }
         }}
       />
     </div>

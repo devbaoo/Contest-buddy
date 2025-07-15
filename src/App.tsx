@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { ChatProvider } from "./contexts/ChatContext";
+import { BalanceProvider } from "./contexts/BalanceContext";
 import Navbar from "./components/Navbar";
 import Chat from "./components/Chat";
 import Index from "./pages/Index";
@@ -25,6 +26,7 @@ import UserDetails from "./pages/UserDetails";
 import TeamDetails from "./pages/TeamDetails";
 import MyCompetitions from "./pages/MyCompetitions";
 import OrganizerBilling from "./pages/OrganizerBilling";
+import OrganizerProfile from "./pages/OrganizerProfile";
 import About from "./pages/About";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -36,7 +38,8 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <UserRoleProvider>
         <ChatProvider>
-          <TooltipProvider>
+          <BalanceProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -64,6 +67,7 @@ const App = () => {
                       <Route path="/admin/reports" element={<Reports />} />
                       <Route path="/admin/analytics" element={<Analytics />} />
                       <Route path="/admin/billing" element={<OrganizerBilling />} />
+                      <Route path="/organizer-profile" element={<OrganizerProfile />} />
                       <Route
                         path="/settings"
                         element={
@@ -87,6 +91,7 @@ const App = () => {
               <Footer />
             </BrowserRouter>
           </TooltipProvider>
+          </BalanceProvider>
         </ChatProvider>
       </UserRoleProvider>
     </QueryClientProvider>

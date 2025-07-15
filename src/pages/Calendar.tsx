@@ -8,6 +8,8 @@ import {
   Clock,
   MapPin,
   Users,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,20 +33,21 @@ export default function Calendar() {
     "month",
   );
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  const currentDate = new Date();
+  const [currentDate, setCurrentDate] = useState(new Date());
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
-  // Get competitions for current month
+  // Get competitions for current month (only registered and interested)
   const thisMonthCompetitions = mockCompetitions.filter((comp) => {
     const startDate = new Date(comp.startDate);
     const regDate = new Date(comp.registrationDeadline);
+    const isRelevant = comp.isRegistered || comp.isInterested;
     return (
-      (startDate.getMonth() === currentMonth &&
+      isRelevant &&
+      ((startDate.getMonth() === currentMonth &&
         startDate.getFullYear() === currentYear) ||
-      (regDate.getMonth() === currentMonth &&
-        regDate.getFullYear() === currentYear)
+        (regDate.getMonth() === currentMonth &&
+          regDate.getFullYear() === currentYear))
     );
   });
 
@@ -54,7 +57,8 @@ export default function Calendar() {
       const today = new Date();
       const diffTime = deadline.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays > 0 && diffDays <= 7;
+      const isRelevant = comp.isRegistered || comp.isInterested;
+      return isRelevant && diffDays > 0 && diffDays <= 7;
     })
     .sort(
       (a, b) =>
@@ -105,9 +109,11 @@ export default function Calendar() {
         const startDate = new Date(comp.startDate);
         const regDate = new Date(comp.registrationDeadline);
         const currentDay = new Date(date);
+        const isRelevant = comp.isRegistered || comp.isInterested;
         return (
-          startDate.toDateString() === currentDay.toDateString() ||
-          regDate.toDateString() === currentDay.toDateString()
+          isRelevant &&
+          (startDate.toDateString() === currentDay.toDateString() ||
+            regDate.toDateString() === currentDay.toDateString())
         );
       });
 
@@ -124,6 +130,18 @@ export default function Calendar() {
   const calendarDays = generateCalendarDays();
   const weekDays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
+  const goToPreviousMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8">
@@ -132,22 +150,8 @@ export default function Calendar() {
           <div>
             <h1 className="text-3xl font-bold mb-2">Lịch cuộc thi</h1>
             <p className="text-muted-foreground">
-              Quản lý và theo dõi các cuộc thi quan trọng
+              Theo dõi các cuộc thi và deadline quan trọng
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Xuất lịch
-            </Button>
-            <Button variant="outline">
-              <Settings className="h-4 w-4 mr-2" />
-              Cài đặt thông báo
-            </Button>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm vào lịch
-            </Button>
           </div>
         </div>
 
@@ -157,7 +161,7 @@ export default function Calendar() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-warning" />
+                  <Bell className="h-5 w-5 text-orange-500" />
                   Deadline sắp tới
                 </CardTitle>
                 <Badge variant="secondary">
@@ -167,9 +171,15 @@ export default function Calendar() {
             </CardHeader>
             <CardContent>
               {upcomingDeadlines.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  Không có deadline nào trong 7 ngày tới
-                </p>
+                <div className="text-center py-8">
+                  <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    Không có deadline nào trong 7 ngày tới
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Bạn có thể yên tâm tập trung vào các cuộc thi hiện tại
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {upcomingDeadlines.map((competition) => {
@@ -179,20 +189,24 @@ export default function Calendar() {
                     return (
                       <div
                         key={competition.id}
-                        className="flex items-center justify-between p-3 rounded-lg border"
+                        className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex-1">
-                          <h4 className="font-semibold mb-1">
+                          <h4 className="font-semibold mb-2 text-lg">
                             {competition.title}
                           </h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
                             <div className="flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
+                              <Clock className="h-4 w-4 mr-2" />
                               {formatDate(competition.registrationDeadline)}
                             </div>
                             <div className="flex items-center">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {competition.location}
+                              <MapPin className="h-4 w-4 mr-2" />
+                              {competition.isOnline ? "Online" : competition.location}
+                            </div>
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-2" />
+                              {competition.participants} thí sinh
                             </div>
                           </div>
                         </div>
@@ -205,14 +219,16 @@ export default function Calendar() {
                                   ? "default"
                                   : "secondary"
                             }
-                            className="mb-2"
+                            className="mb-2 text-sm px-3 py-1"
                           >
                             {daysLeft === 1
                               ? "Còn 1 ngày"
-                              : `Còn ${daysLeft} ngày`}
+                              : daysLeft === 0
+                                ? "Hôm nay"
+                                : `Còn ${daysLeft} ngày`}
                           </Badge>
                           <div className="text-xs text-muted-foreground">
-                            Hạn đăng ký
+                            Hạn đăng ký cuối cùng
                           </div>
                         </div>
                       </div>
@@ -225,51 +241,51 @@ export default function Calendar() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Cài đặt nhắc nhở</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Thống kê tháng này
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {thisMonthCompetitions.length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Cuộc thi
+                  </div>
+                </div>
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {upcomingDeadlines.length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Deadline sắp tới
+                  </div>
+                </div>
+              </div>
+              
               <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="email" defaultChecked />
-                  <Label htmlFor="email">Email thông báo</Label>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Cuộc thi đã đăng ký:</span>
+                  <span className="font-medium">
+                    {thisMonthCompetitions.filter(comp => comp.isRegistered).length}
+                  </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="push" defaultChecked />
-                  <Label htmlFor="push">Push notification</Label>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Cuộc thi quan tâm:</span>
+                  <span className="font-medium">
+                    {thisMonthCompetitions.filter(comp => comp.isInterested && !comp.isRegistered).length}
+                  </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="calendar" />
-                  <Label htmlFor="calendar">Đồng bộ Google Calendar</Label>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Thời gian nhắc trước:</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="week" defaultChecked />
-                    <Label htmlFor="week" className="text-sm">
-                      1 tuần trước
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="3days" defaultChecked />
-                    <Label htmlFor="3days" className="text-sm">
-                      3 ngày trước
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="1day" defaultChecked />
-                    <Label htmlFor="1day" className="text-sm">
-                      1 ngày trước
-                    </Label>
-                  </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Cuộc thi online:</span>
+                  <span className="font-medium">
+                    {thisMonthCompetitions.filter(comp => comp.isOnline).length}
+                  </span>
                 </div>
               </div>
-
-              <Button className="w-full" size="sm">
-                Lưu cài đặt
-              </Button>
             </CardContent>
           </Card>
         </div>
@@ -306,17 +322,46 @@ export default function Calendar() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>
-                    Tháng {currentMonth + 1}, {currentYear}
-                  </span>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPreviousMonth}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xl min-w-[120px] text-center">
+                        Tháng {currentMonth + 1}, {currentYear}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextMonth}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToToday}
+                    >
+                      Hôm nay
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-blue-500 rounded"></div>
                       <span>Bắt đầu thi</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-orange-500 rounded"></div>
                       <span>Hạn đăng ký</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded"></div>
+                      <span>Kết thúc</span>
                     </div>
                   </div>
                 </CardTitle>
@@ -364,16 +409,23 @@ export default function Calendar() {
                           const isStart =
                             new Date(comp.startDate).toDateString() ===
                             day.date.toDateString();
+                          const isEnd =
+                            new Date(comp.endDate).toDateString() ===
+                            day.date.toDateString();
 
                           return (
                             <div
                               key={comp.id}
-                              className={`text-xs p-1 rounded truncate ${
+                              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
                                 isDeadline
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "bg-blue-100 text-blue-700"
+                                  ? "bg-orange-100 text-orange-700 border border-orange-200"
+                                  : isEnd
+                                    ? "bg-green-100 text-green-700 border border-green-200"
+                                  : comp.isRegistered
+                                    ? "bg-blue-100 text-blue-700 border border-blue-200"
+                                    : "bg-purple-100 text-purple-700 border border-purple-200"
                               }`}
-                              title={comp.title}
+                              title={`${comp.title} - ${isDeadline ? 'Hạn đăng ký' : isEnd ? 'Kết thúc' : comp.isRegistered ? 'Đã đăng ký' : 'Quan tâm'}`}
                             >
                               {comp.title}
                             </div>
@@ -409,15 +461,24 @@ export default function Calendar() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Cuộc thi tháng này</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5" />
+                    Cuộc thi tháng này ({thisMonthCompetitions.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {thisMonthCompetitions.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Không có cuộc thi nào trong tháng này
-                    </p>
+                    <div className="text-center py-12">
+                      <CalendarIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground text-lg mb-2">
+                        Không có cuộc thi nào trong tháng này
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Hãy kiểm tra các tháng khác hoặc đăng ký thông báo để không bỏ lỡ cuộc thi mới
+                      </p>
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                       {thisMonthCompetitions.map((competition) => (
                         <CompetitionCard
                           key={competition.id}

@@ -20,6 +20,9 @@ export interface Competition {
   rules?: string;
   featured: boolean;
   status: CompetitionStatus;
+  isRegistered?: boolean;
+  isInterested?: boolean;
+  registrationDate?: Date;
 }
 
 export interface User {

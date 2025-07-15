@@ -15,6 +15,7 @@ import {
   Shield,
   Info,
   Rocket,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +31,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/contexts/UserRoleContext";
+import { useBalance } from "@/contexts/BalanceContext";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { userRole, toggleUserRole, isAdmin } = useUserRole();
+  const { balance } = useBalance();
 
   const participantNavigation = [
     { name: "Trang chủ", href: "/home", icon: Rocket },
@@ -134,14 +137,29 @@ export default function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem asChild>
-                <Link to="/profile" className="flex items-center">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Hồ sơ của tôi</span>
-                </Link>
-              </DropdownMenuItem>
-              {!isAdmin && (
+              {isAdmin ? (
                 <>
+                  <div className="px-3 py-2 border-b">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Số dư:</span>
+                      <span className="text-sm font-bold text-green-600">{balance.toLocaleString()} VNĐ</span>
+                    </div>
+                  </div>
+                  <DropdownMenuItem asChild>
+                    <Link to="/organizer-profile" className="flex items-center">
+                      <Building2 className="mr-2 h-4 w-4" />
+                      <span>Thông tin Ban tổ chức</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Hồ sơ của tôi</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/my-competitions" className="flex items-center">
                       <Trophy className="mr-2 h-4 w-4" />
